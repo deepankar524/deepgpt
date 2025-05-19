@@ -17,12 +17,7 @@
                     <div class="card-body">
                         <h1 class="card-title text-center chat-header">Chat with DEEPGPT</h1>
                         <div id="chat-history" class="chat-history mb-3">
-                            {% for message in chat_history %}
-                                <div class="mb-2">
-                                    <strong>User:</strong> {{ message.user_input }}<br>
-                                    <strong>DEEPGPT:</strong> {{ message.response }}
-                                </div>
-                            {% endfor %}
+                            <!-- Chat messages will be appended here -->
                         </div>
                         <form id="chat-form">
                             <div class="mb-3">
