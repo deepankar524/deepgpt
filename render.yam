@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: llama-chatbot
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    envVars:
+      - key: OPENROUTER_API_KEY
+        value: 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
