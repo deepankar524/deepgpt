@@ -1,48 +1,40 @@
-import os
-import json
-import requests
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, render_template, request, jsonify
+from huggingface_hub import InferenceClient
 
 app = Flask(__name__)
 
-# ✅ Hardcoded API Key (NOT recommended for production)
-API_KEY = "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"
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Initialize Hugging Face InferenceClient
+client = InferenceClient(
+    provider="novita",
+    api_key="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"
+)
 
-chat_history = []
-
-def query_llama(prompt):
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "openai/gpt-4",  # 🔄 or use a model you're allowed to access
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 200,
-        "temperature": 0.7
-    }
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "No response from model.")
-    except requests.exceptions.RequestException as e:
-        return f"An error occurred: {e}"
-
-@app.route("/", methods=["GET"])
+@app.route('/')
 def index():
-    return render_template("index.html", chat_history=chat_history)
+    return render_template('index.html')
 
-@app.route("/chat", methods=["POST"])
+@app.route('/chat', methods=['POST'])
 def chat():
-    data = request.get_json()
-    user_input = data.get("user_input", "")
-    if user_input:
-        response = query_llama(user_input)
-        chat_history.append({"user_input": user_input, "response": response})
-        return jsonify({"user_input": user_input, "response": response})
-    return jsonify({"error": "No input provided."}), 400
+    user_input = request.json.get('user_input')
+    messages = [
+        {"role": "user", "content": user_input}
+    ]
 
-if __name__ == "__main__":
+    response_text = ""
+    stream = client.chat.completions.create(
+        model="Qwen/Qwen3-235B-A22B",
+        messages=messages,
+        temperature=0.5,
+        max_tokens=500,
+        top_p=0.7,
+        stream=True
+    )
+
+    for chunk in stream:
+        if chunk.choices[0].delta.content:
+            response_text += chunk.choices[0].delta.content
+
+    return jsonify({"user_input": user_input, "response": response_text})
+
+if __name__ == '__main__':
     app.run(debug=True)
